@@ -30,6 +30,8 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
   const router = useRouter();
   const [view, setView] = useState<"kanban" | "table">("kanban");
   const [isPending, startTransition] = useTransition();
+  const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
+  const [activeDropStatus, setActiveDropStatus] = useState<string | null>(null);
 
   const grouped = useMemo(
     () =>
@@ -62,6 +64,19 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
     });
   }
 
+  function handleDrop(jobId: string, nextStatus: string) {
+    const currentJob = jobs.find((job) => job.id === jobId);
+
+    setDraggedJobId(null);
+    setActiveDropStatus(null);
+
+    if (!currentJob || currentJob.status === nextStatus) {
+      return;
+    }
+
+    void updateStatus(jobId, nextStatus);
+  }
+
   function exportCsv() {
     const lines = [
       ["Title", "Company", "Status", "Location", "Application Date", "Follow-up Date", "Skills"].join(","),
@@ -87,6 +102,10 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
     link.download = "job-tracker-export.csv";
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function openJob(jobId: string) {
+    router.push(`/dashboard/jobs/${jobId}`);
   }
 
   return (
@@ -123,7 +142,29 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
       {view === "kanban" ? (
         <div className="grid gap-5 xl:grid-cols-3 2xl:grid-cols-6">
           {grouped.map((column) => (
-            <Card key={column.status} className="p-4">
+            <Card
+              key={column.status}
+              className={`p-4 transition ${activeDropStatus === column.status ? "border-primary bg-primary/5" : ""}`}
+              onDragOver={(event) => {
+                event.preventDefault();
+                if (draggedJobId) {
+                  setActiveDropStatus(column.status);
+                }
+              }}
+              onDragLeave={() => {
+                if (activeDropStatus === column.status) {
+                  setActiveDropStatus(null);
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const jobId = event.dataTransfer.getData("text/plain") || draggedJobId;
+
+                if (jobId) {
+                  handleDrop(jobId, column.status);
+                }
+              }}
+            >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   {statusLabels[column.status]}
@@ -132,7 +173,23 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
               </div>
               <div className="space-y-4">
                 {column.jobs.map((job) => (
-                  <div key={job.id} className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                  <div
+                    key={job.id}
+                    draggable
+                    onDragStart={(event) => {
+                      setDraggedJobId(job.id);
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", job.id);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedJobId(null);
+                      setActiveDropStatus(null);
+                    }}
+                    onClick={() => openJob(job.id)}
+                    className={`cursor-pointer rounded-2xl border border-border/70 bg-background/80 p-4 transition ${
+                      draggedJobId === job.id ? "opacity-60 ring-2 ring-primary/20" : ""
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <Link href={`/dashboard/jobs/${job.id}`} className="font-semibold hover:text-primary">
@@ -149,9 +206,13 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
                         <Badge key={skill}>{skill}</Badge>
                       ))}
                     </div>
+                    <p className="mt-4 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                      Drag to another column to change status
+                    </p>
                     <div className="mt-4">
                       <select
                         value={job.status}
+                        onClick={(event) => event.stopPropagation()}
                         onChange={(event) => updateStatus(job.id, event.target.value)}
                         disabled={isPending}
                         className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm"
@@ -183,7 +244,11 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
             </thead>
             <tbody>
               {jobs.map((job) => (
-                <tr key={job.id} className="border-b border-border/60 last:border-0">
+                <tr
+                  key={job.id}
+                  className="cursor-pointer border-b border-border/60 transition hover:bg-muted/30 last:border-0"
+                  onClick={() => openJob(job.id)}
+                >
                   <td className="px-5 py-4">
                     <Link href={`/dashboard/jobs/${job.id}`} className="font-semibold hover:text-primary">
                       {job.title}
@@ -202,6 +267,7 @@ export function JobsView({ jobs }: { jobs: JobItem[] }) {
                   <td className="px-5 py-4">
                     <select
                       value={job.status}
+                      onClick={(event) => event.stopPropagation()}
                       onChange={(event) => updateStatus(job.id, event.target.value)}
                       disabled={isPending}
                       className="h-10 rounded-xl border border-input bg-card px-3 text-sm"

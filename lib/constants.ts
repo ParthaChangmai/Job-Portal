@@ -96,3 +96,22 @@ export const dashboardNav = [
     label: "Settings"
   }
 ];
+
+export const indiaLocationSuggestions = [
+  "India",
+  "Remote - India",
+  "Bengaluru, Karnataka, India",
+  "Hyderabad, Telangana, India",
+  "Pune, Maharashtra, India",
+  "Mumbai, Maharashtra, India",
+  "Delhi, India",
+  "Gurugram, Haryana, India",
+  "Noida, Uttar Pradesh, India",
+  "Chennai, Tamil Nadu, India",
+  "Kolkata, West Bengal, India",
+  "Ahmedabad, Gujarat, India",
+  "Jaipur, Rajasthan, India",
+  "Kochi, Kerala, India",
+  "Coimbatore, Tamil Nadu, India",
+  "Indore, Madhya Pradesh, India"
+];

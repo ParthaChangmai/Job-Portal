@@ -42,9 +42,9 @@ export function DashboardSidebar() {
 
   return (
     <>
-      <aside className="hidden w-72 flex-col border-r border-border/60 bg-card/70 p-6 backdrop-blur xl:flex">
+      <aside className="sticky top-0 hidden h-screen w-72 flex-col border-r border-border/60 bg-card/70 p-6 backdrop-blur xl:flex">
         <LogoMark />
-        <div className="mt-10">
+        <div className="mt-10 flex-1 overflow-y-auto pr-1">
           <NavLinks />
         </div>
         <div className="mt-auto rounded-3xl bg-secondary/60 p-5 text-sm text-secondary-foreground">
