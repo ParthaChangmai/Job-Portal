@@ -1,16 +1,20 @@
+import { ResumeUploadForm } from "@/components/forms/resume-upload-form";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/session";
+import { getSettingsData } from "@/lib/data/dashboard";
+import { formatDate } from "@/lib/utils";
 
 export default async function SettingsPage() {
   const user = await requireUser();
+  const data = await getSettingsData(user.id);
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Settings"
-        title="Workspace and integration notes"
-        description="A lightweight settings page for profile context, environment-based integrations, and deployment readiness."
+        title="Workspace, resume, and integrations"
+        description="Manage your profile, upload the resume used for AI match analysis, and review the app's free-tier integrations."
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -31,6 +35,40 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
+          <h2 className="font-display text-2xl font-semibold">Resume matching</h2>
+          <div className="mt-5 space-y-4 text-sm text-muted-foreground">
+            <p>
+              Upload your resume once and the app will summarize it, extract skills, and compare it against saved jobs.
+            </p>
+            {!data.resumeFeatureReady ? (
+              <p>
+                Resume matching is temporarily unavailable because your database has not been updated with the latest schema yet.
+              </p>
+            ) : data.resumeProfile ? (
+              <p>
+                Current resume updated on {formatDate(data.resumeProfile.updatedAt)}.
+              </p>
+            ) : (
+              <p>No resume uploaded yet. Upload one to unlock job-fit analysis.</p>
+            )}
+          </div>
+          <div className="mt-5">
+            <ResumeUploadForm
+              existingResume={
+                data.resumeProfile
+                  ? {
+                      fileName: data.resumeProfile.fileName,
+                      updatedAt: data.resumeProfile.updatedAt.toISOString(),
+                      aiSummary: data.resumeProfile.aiSummary,
+                      extractedSkills: data.resumeProfile.extractedSkills
+                    }
+                  : null
+              }
+            />
+          </div>
+        </Card>
+
+        <Card>
           <h2 className="font-display text-2xl font-semibold">Integrations</h2>
           <div className="mt-5 space-y-4 text-sm text-muted-foreground">
             <p>
@@ -38,8 +76,8 @@ export default async function SettingsPage() {
               listings when it does not.
             </p>
             <p>
-              AI enrichment uses a free-compatible provider when `FREE_AI_API_KEY` and `FREE_AI_API_URL` are configured. Otherwise,
-              a local rule-based parser extracts skills, seniority, work style, and a short summary.
+              AI enrichment and resume-job comparison use a free-compatible provider when `FREE_AI_API_KEY` is configured. The app
+              defaults cleanly to OpenRouter-compatible requests and falls back to local heuristics if no key exists.
             </p>
             <p>
               This project is designed for free-tier deployment on Vercel plus Neon or Supabase Postgres.

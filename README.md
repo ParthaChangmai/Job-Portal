@@ -21,9 +21,11 @@ Job Tracker Pro AI is a full-stack job application tracker built with Next.js Ap
 - Live job search through JSearch via secure server-side API calls
 - Dummy fallback job search mode when `JSEARCH_API_KEY` is missing
 - Save/import jobs with duplicate protection per user
+- Resume upload with text extraction for PDF, DOCX, TXT, and MD files
 - AI enrichment abstraction with:
-  - optional OpenAI-compatible free provider
+  - optional OpenRouter-compatible free provider
   - local regex/keyword fallback parser
+- Resume-to-job fit analysis with score, strengths, gaps, and summary
 - Job pipeline management:
   - Saved
   - Applied
@@ -114,5 +116,6 @@ For deployment:
 ## Important notes
 
 - If `JSEARCH_API_KEY` is missing, the app still works using realistic fallback data.
-- If `FREE_AI_API_KEY` or `FREE_AI_API_URL` is missing, enrichment falls back to local parsing.
+- If `FREE_AI_API_KEY` is missing, enrichment and resume-job matching fall back to local parsing.
 - GitHub auth only appears when both GitHub env vars are configured.
+- The recommended free AI setup is OpenRouter with `FREE_AI_API_URL="https://openrouter.ai/api/v1/chat/completions"` and `FREE_AI_MODEL="openrouter/free"`.

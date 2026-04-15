@@ -39,6 +39,8 @@ export interface NormalizedJobSearchItem {
   companyLogo: string | null;
   datePosted: string | null;
   description: string;
+  isSaved?: boolean;
+  savedJobId?: string | null;
 }
 
 export interface EnrichedJobPayload {
@@ -46,6 +48,18 @@ export interface EnrichedJobPayload {
   skills: string[];
   seniority: SeniorityLabel;
   workStyle: WorkStyleLabel;
+}
+
+export interface ResumeInsightsPayload {
+  summary: string;
+  skills: string[];
+}
+
+export interface ResumeJobMatchPayload {
+  score: number;
+  summary: string;
+  strengths: string[];
+  gaps: string[];
 }
 
 export interface SearchFilters {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SeniorityBadge, StatusBadge, WorkStyleBadge } from "@/components/dashboard/status-badge";
@@ -7,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/session";
 import { getSavedJobDetail } from "@/lib/data/dashboard";
+import { getResumeProfileForUser, compareResumeToJob } from "@/lib/services/resume";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function SavedJobDetailPage({
@@ -17,12 +19,22 @@ export default async function SavedJobDetailPage({
   const user = await requireUser();
   const { id } = await params;
   const job = await getSavedJobDetail(user.id, id);
+  const resumeProfile = await getResumeProfileForUser(user.id);
 
   if (!job) {
     notFound();
   }
 
-  const matchScore = Math.min(100, 48 + job.extractedSkills.length * 7 + (job.seniority === "SENIOR" ? 8 : 0));
+  const match = resumeProfile
+    ? await compareResumeToJob({
+        resumeText: resumeProfile.rawText,
+        resumeSkills: resumeProfile.extractedSkills,
+        jobTitle: job.title,
+        jobDescription: job.description,
+        jobSkills: job.extractedSkills,
+        location: job.location
+      })
+    : null;
 
   return (
     <div className="space-y-8">
@@ -68,13 +80,51 @@ export default async function SavedJobDetailPage({
           <Card>
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-semibold">Skills and prep</h2>
-              <Badge variant="primary">Match score {matchScore}%</Badge>
+              {match ? <Badge variant="primary">Resume match {match.score}%</Badge> : null}
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {job.extractedSkills.map((skill) => (
                 <Badge key={skill}>{skill}</Badge>
               ))}
             </div>
+            {match ? (
+              <div className="mt-6 grid gap-5 lg:grid-cols-2">
+                <div className="rounded-3xl border border-border/70 bg-background/70 p-5">
+                  <h3 className="font-semibold">AI fit summary</h3>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">{match.summary}</p>
+                </div>
+                <div className="rounded-3xl border border-border/70 bg-background/70 p-5">
+                  <h3 className="font-semibold">Strengths</h3>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    {match.strengths.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-3xl border border-border/70 bg-background/70 p-5 lg:col-span-2">
+                  <h3 className="font-semibold">Likely gaps to address</h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {match.gaps.length > 0 ? (
+                      match.gaps.map((item) => (
+                        <Badge key={item} variant="warning">
+                          {item}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No obvious keyword gaps detected from the current resume.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-3xl border border-dashed border-border bg-background/60 p-5 text-sm text-muted-foreground">
+                Upload your resume in{" "}
+                <Link href="/dashboard/settings" className="font-semibold text-primary hover:underline">
+                  Settings
+                </Link>{" "}
+                to unlock AI-based job matching, strengths, and gap analysis for this role.
+              </div>
+            )}
             <div className="mt-6 rounded-3xl border border-border/70 bg-background/70 p-5">
               <h3 className="font-semibold">Interview prep checklist</h3>
               <ul className="mt-3 space-y-2 text-sm text-muted-foreground">

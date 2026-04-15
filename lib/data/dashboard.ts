@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { addDays } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
+import { isMissingTableError } from "@/lib/prisma-errors";
 import { getAnalyticsForUser } from "@/lib/services/analytics";
 import { jobFilterSchema } from "@/lib/validators";
 
@@ -154,6 +155,41 @@ export async function getSavedJobDetail(userId: string, jobId: string) {
       }
     }
   });
+}
+
+export async function getSettingsData(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      },
+      include: {
+        resumeProfile: true
+      }
+    });
+
+    return {
+      user,
+      resumeProfile: user?.resumeProfile ?? null,
+      resumeFeatureReady: true
+    };
+  } catch (error) {
+    if (isMissingTableError(error, "ResumeProfile")) {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: userId
+        }
+      });
+
+      return {
+        user,
+        resumeProfile: null,
+        resumeFeatureReady: false
+      };
+    }
+
+    throw error;
+  }
 }
 
 export async function getRemindersForUser(userId: string) {

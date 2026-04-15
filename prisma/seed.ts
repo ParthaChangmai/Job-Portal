@@ -223,6 +223,31 @@ async function main() {
     ]
   });
 
+  await prisma.resumeProfile.upsert({
+    where: {
+      userId: user.id
+    },
+    update: {
+      fileName: "demo_resume.txt",
+      mimeType: "text/plain",
+      rawText:
+        "Partha Demo\nFrontend and full stack engineer with 4 years of experience building React, Next.js, TypeScript, Node.js, PostgreSQL, Tailwind CSS, and REST API products. Built analytics dashboards, shipped recruiter workflow tools, improved performance, collaborated with designers, and mentored junior teammates. Comfortable with AWS, Docker, testing, Git, and agile product delivery.",
+      aiSummary:
+        "Full stack engineer with strong React, Next.js, TypeScript, Node.js, and dashboard delivery experience, plus collaboration and mentoring strengths.",
+      extractedSkills: ["React", "Next.js", "TypeScript", "Node.js", "PostgreSQL", "Tailwind CSS", "AWS", "Docker"]
+    },
+    create: {
+      userId: user.id,
+      fileName: "demo_resume.txt",
+      mimeType: "text/plain",
+      rawText:
+        "Partha Demo\nFrontend and full stack engineer with 4 years of experience building React, Next.js, TypeScript, Node.js, PostgreSQL, Tailwind CSS, and REST API products. Built analytics dashboards, shipped recruiter workflow tools, improved performance, collaborated with designers, and mentored junior teammates. Comfortable with AWS, Docker, testing, Git, and agile product delivery.",
+      aiSummary:
+        "Full stack engineer with strong React, Next.js, TypeScript, Node.js, and dashboard delivery experience, plus collaboration and mentoring strengths.",
+      extractedSkills: ["React", "Next.js", "TypeScript", "Node.js", "PostgreSQL", "Tailwind CSS", "AWS", "Docker"]
+    }
+  });
+
   console.log("Seed complete.");
   console.log("Demo email: demo@jobtrackerpro.ai");
   console.log("Demo password: Demo@12345");
